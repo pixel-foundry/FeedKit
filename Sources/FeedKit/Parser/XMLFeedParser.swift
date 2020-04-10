@@ -69,6 +69,8 @@ class XMLFeedParser: NSObject, XMLParserDelegate, FeedParserProtocol {
     /// e.g. "/rss/channel/title" means it's currently parsing the channels
     /// `<title>` element.
     fileprivate var currentXMLDOMPath: URL = URL(string: "/")!
+    fileprivate var parsingXHTML = false
+    fileprivate var xhtmlString: String?
     
     /// A parsing error, if any.
     var parsingError: Error?
@@ -107,10 +109,10 @@ class XMLFeedParser: NSObject, XMLParserDelegate, FeedParserProtocol {
     /// - Parameter string: The characters to map.
     fileprivate func map(_ string: String) {
         guard let feedType = self.feedType else { return }
-        
+
         switch feedType {
         case .atom:
-            if let path = AtomPath(rawValue: self.currentXMLDOMPath.absoluteString) {
+            if let path = AtomPath(self.currentXMLDOMPath) {
                 self.atomFeed?.map(string, for: path)
             }
             
@@ -125,7 +127,20 @@ class XMLFeedParser: NSObject, XMLParserDelegate, FeedParserProtocol {
             }
             
         }
-        
+    }
+
+    fileprivate func addXHTMLTag(_ name: String, attributes: [String: String]) {
+        var tag = "<\(name)"
+        let attributeString: String = attributes.map { key, value in
+            " \(key)=\"\(value)\""
+        }.joined()
+        tag.append(attributeString)
+        tag.append(">")
+        self.xhtmlString?.append(tag)
+    }
+
+    fileprivate func closeXHTMLTag(_ name: String) {
+        self.xhtmlString?.append("</\(name)>")
     }
     
 }
@@ -144,7 +159,7 @@ extension XMLFeedParser {
         
         // Update the current path along the XML's DOM elements by appending the new component with `elementName`.
         self.currentXMLDOMPath = self.currentXMLDOMPath.appendingPathComponent(elementName)
-        
+
         // Get the feed type from the element, if it hasn't been done yet.
         guard let feedType = self.feedType else {
             self.feedType = XMLFeedType(rawValue: elementName)
@@ -153,13 +168,22 @@ extension XMLFeedParser {
         
         switch feedType {
         case .atom:
-            if  self.atomFeed == nil {
+            if self.atomFeed == nil {
                 self.atomFeed = AtomFeed()
+            }
+            if self.parsingXHTML {
+                self.addXHTMLTag(elementName, attributes: attributeDict)
+                return
             }
             if let path = AtomPath(rawValue: self.currentXMLDOMPath.absoluteString) {
                 self.atomFeed?.map(attributeDict, for: path)
             }
-            
+            if attributeDict["type"]?.xhtml == true && elementName.potentialXHTMLParent {
+                self.parsingXHTML = true
+                self.xhtmlString = ""
+                return
+            }
+
         case .rdf:
             if  self.rssFeed == nil {
                 self.rssFeed = RSSFeed()
@@ -186,8 +210,21 @@ extension XMLFeedParser {
         namespaceURI: String?,
         qualifiedName qName: String?)
     {
+        if self.parsingXHTML {
+            if elementName.potentialXHTMLParent {
+                self.parsingXHTML = false
+                if let completeXHTMLString = xhtmlString {
+                    self.map(completeXHTMLString)
+                }
+                self.xhtmlString = nil
+            } else {
+                self.closeXHTMLTag(elementName)
+            }
+        }
+
         // Update the current path along the XML's DOM elements by deleting last component.
         self.currentXMLDOMPath = self.currentXMLDOMPath.deletingLastPathComponent()
+
         if currentXMLDOMPath.absoluteString == "/" {
             parseComplete = true
             xmlParser.abortParsing()
@@ -204,9 +241,13 @@ extension XMLFeedParser {
     }
     
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        self.map(string)
+        if self.parsingXHTML, self.xhtmlString != nil {
+            self.xhtmlString?.append(string)
+        } else {
+            self.map(string)
+        }
     }
-    
+
     func parser(_ parser: XMLParser, parseErrorOccurred parseError: Error) {
         // Ignore errors that occur after a feed is successfully parsed. Some
         // real-world feeds contain junk such as "[]" after the XML segment;
@@ -215,4 +256,16 @@ extension XMLFeedParser {
         self.parsingError = parseError
     }
     
+}
+
+fileprivate extension String {
+
+    var xhtml: Bool {
+        self.lowercased() == "xhtml"
+    }
+
+    var potentialXHTMLParent: Bool {
+        self.lowercased() == "summary" || self.lowercased() == "content"
+    }
+
 }

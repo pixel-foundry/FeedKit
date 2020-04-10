@@ -106,5 +106,13 @@ enum AtomPath: String {
     case feedEntryMediaGroupMediaCategory                  = "/feed/entry/media:group/media:category"
     case feedEntryMediaGroupMediaRating                    = "/feed/entry/media:group/media:rating"
     case feedEntryMediaGroupMediaContent                   = "/feed/entry/media:group/media:content"
+
+    init?(_ url: URL) {
+        var string = url.absoluteString
+        if string.last == "/" {
+            string = String(string.dropLast())
+        }
+        self.init(rawValue: string)
+    }
     
 }
