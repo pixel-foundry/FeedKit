@@ -167,6 +167,7 @@ class AtomTests: BaseTestCase {
             XCTAssertEqual(feed?.entries?.first?.content?.value, "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><i>[Update: The Atom draft is finished.]</i></p></div>")
             XCTAssertNotNil(feed?.entries?.first?.content?.attributes)
             XCTAssertEqual(feed?.entries?.first?.content?.attributes?.type, "xhtml")
+            XCTAssertEqual(feed?.entries?.first?.content?.attributes?.base, "http://diveintomark.org/")
             XCTAssertEqual(feed?.entries?.first?.content?.attributes?.src, "http://www.example.org/")
 
             XCTAssertEqual(feed?.entries?.last?.summary?.value, "\n            <div xmlns=\"http://www.w3.org/1999/xhtml\">\n                <p>\n                    <strong>Some markings</strong>\n                    <a href=\"http://www.example.org/\">Example</a>\n                </p>\n                <div class=\"blockquote\">\n                    <p>On a quote...</p>\n                </div>\n            </div>\n        ")

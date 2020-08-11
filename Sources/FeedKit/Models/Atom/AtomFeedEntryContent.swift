@@ -52,7 +52,13 @@ public class AtomFeedEntryContent {
         /// if the server providing that content also provides a media type, the
         /// server-provided media type is authoritative.
         public var src: String?
-        
+
+        /// Any element defined by this specification MAY have an xml:base attribute [W3C.REC-xmlbase-20010627].
+        /// When xml:base is used in an Atom Document, it serves the function described in section 5.1.1 of [RFC3986],
+        /// establishing the base URI (or IRI) for resolving any relative references
+        /// found within the effective scope of the xml:base attribute.
+        public var base: String?
+
     }
     
     /// The element's attributes.
@@ -79,16 +85,15 @@ extension AtomFeedEntryContent {
 extension AtomFeedEntryContent.Attributes {
     
     convenience init?(attributes attributeDict: [String : String]) {
-        
         if attributeDict.isEmpty {
             return nil
         }
         
         self.init()
-        
+
         self.type   = attributeDict["type"]
         self.src    = attributeDict["src"]
-        
+        self.base   = attributeDict["xml:base"]
     }
     
 }
