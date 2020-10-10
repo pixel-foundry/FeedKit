@@ -61,7 +61,11 @@ extension AtomFeed {
         case .feedEntrySourceTitle:                            self.entries?.last?.source?.title                                 = self.entries?.last?.source?.title?.appending(string) ?? string
         case .feedEntrySourceUpdated:                          self.entries?.last?.source?.updated                               = string.toPermissiveDate()
         case .feedEntryRights:                                 self.entries?.last?.rights                                        = self.entries?.last?.rights?.appending(string) ?? string
-        case .feedEntryAuthorName:                             self.entries?.last?.authors?.last?.name                           = self.entries?.last?.authors?.last?.name?.appending(string) ?? string
+        case .feedEntryAuthorName:
+					if self.entries?.last?.authors?.last?.name != nil {
+						self.entries?.last?.authors?.append(AtomFeedEntryAuthor())
+					}
+					self.entries?.last?.authors?.last?.name = self.entries?.last?.authors?.last?.name?.appending(string) ?? string
         case .feedEntryAuthorEmail:                            self.entries?.last?.authors?.last?.email                          = self.entries?.last?.authors?.last?.email?.appending(string) ?? string
         case .feedEntryAuthorUri:                              self.entries?.last?.authors?.last?.uri                            = self.entries?.last?.authors?.last?.uri?.appending(string) ?? string
         case .feedEntryContributorName:                        self.entries?.last?.contributors?.last?.name                      = self.entries?.last?.contributors?.last?.name?.appending(string) ?? string
