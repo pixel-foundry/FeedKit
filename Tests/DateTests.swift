@@ -31,26 +31,30 @@ class DateTests: BaseTestCase {
         
         // Given
         let rfc822DateFormatter = RFC822DateFormatter()
-        let dateString = "Tue, 04 Feb 2014 22:03:45 Z"
+        let dateStrings = [
+            "Tue, 04 Feb 2014 22:03:45 Z",
+            "Wed, 05 Feb 2014 00:03:45 CEST"
+        ]
         
         var calendar = Calendar(identifier: Calendar.Identifier.gregorian)
         calendar.locale = Locale(identifier: "en_US_POSIX")
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         
-        // When
-        let date = rfc822DateFormatter.date(from: dateString)
-        
-        // Then
-        XCTAssertNotNil(date)
-        
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date!)
-        
-        XCTAssertEqual(components.day, 4)
-        XCTAssertEqual(components.month, 2)
-        XCTAssertEqual(components.year, 2014)
-        XCTAssertEqual(components.hour, 22)
-        XCTAssertEqual(components.minute, 3)
-        XCTAssertEqual(components.second, 45)
+        for dateString in dateStrings {
+            let date = rfc822DateFormatter.date(from: dateString)
+
+            // Then
+            XCTAssertNotNil(date)
+
+            let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date!)
+
+            XCTAssertEqual(components.day, 4)
+            XCTAssertEqual(components.month, 2)
+            XCTAssertEqual(components.year, 2014)
+            XCTAssertEqual(components.hour, 22)
+            XCTAssertEqual(components.minute, 3)
+            XCTAssertEqual(components.second, 45)
+        }
         
     }
     
@@ -121,6 +125,7 @@ class DateTests: BaseTestCase {
             "Sun, 05 Jun 2016 08:35:14 Z",
             "Sun, 05 Jun 2016 08:54 +0000",
             "Mon, 21 Mar 2016 13:31:23 GMT",
+            "Mon, 21 Mar 2016 13:31:23 CEST",
             "Sat, 04 Jun 2016 16:26:37 EDT",
             "Sat, 04 Jun 2016 11:55:28 PDT",
             "Sun, 5 Jun 2016 01:51:07 -0700",

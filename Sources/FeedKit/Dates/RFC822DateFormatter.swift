@@ -50,19 +50,29 @@ class RFC822DateFormatter: DateFormatter {
         fatalError("init(coder:) not supported")
     }
     
-    private func attemptParsing(from string: String, formats: [String]) -> Date? {
+    private func attemptParsing(from string: String, formats: [String], locale: Locale? = nil) -> Date? {
+        let originalLocale = self.locale
+        if let locale = locale {
+            self.locale = locale
+        }
         for dateFormat in formats {
             self.dateFormat = dateFormat
             if let date = super.date(from: string) {
                 return date
             }
         }
+        self.locale = originalLocale
         return nil
     }
     
     override func date(from string: String) -> Date? {
         let string = string.trimmingCharacters(in: .whitespacesAndNewlines)
         if let parsedDate = attemptParsing(from: string, formats: dateFormats) {
+            return parsedDate
+        }
+        // Apple intentionally ignores some valid timezone abbreviations (like "CEST") if they don’t match the
+        // current locale region. See http://www.openradar.me/9944011
+        if let parsedDate = attemptParsing(from: string, formats: dateFormats, locale: Locale(identifier: "en_GB_POSIX")) {
             return parsedDate
         }
         // See if we can lop off a text weekday, as DateFormatter does not
